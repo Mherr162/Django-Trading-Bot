@@ -31,7 +31,7 @@ A powerful cryptocurrency trading bot built with Django, featuring real-time tra
 
 3. Install dependencies:
    ```
-   pip install -r requirements.txt
+   pip install pandas ccxt django
    ```
 
 4. Apply migrations:
