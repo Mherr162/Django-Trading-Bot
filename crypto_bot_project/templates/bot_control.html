@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading Bot</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="{% static 'custom_pair.js' %}" defer></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --background-dark: #0f172a;
+            --background-light: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-dark);
+            position: relative;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+            background-image: url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* Crypto-themed background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.7);
+            z-index: -2;
+            backdrop-filter: blur(0px);
+        }
+
+        /* Crypto-themed grid pattern */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(37, 99, 235, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 99, 235, 0.15) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+            opacity: 0.7;
+        }
+
+        /* Blockchain-like pattern */
+        .blockchain-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 25% 25%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
+            background-size: 100% 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        /* Crypto data stream effect */
+        .crypto-data-stream {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .data-stream {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--primary-color), transparent);
+            animation: dataStream 3s infinite linear;
+        }
+
+        .data-stream:nth-child(1) { left: 5%; top: -100px; animation-delay: 0s; }
+        .data-stream:nth-child(2) { left: 15%; top: -100px; animation-delay: 0.5s; }
+        .data-stream:nth-child(3) { left: 25%; top: -100px; animation-delay: 1s; }
+        .data-stream:nth-child(4) { left: 35%; top: -100px; animation-delay: 1.5s; }
+        .data-stream:nth-child(5) { left: 45%; top: -100px; animation-delay: 2s; }
+        .data-stream:nth-child(6) { left: 55%; top: -100px; animation-delay: 2.5s; }
+        .data-stream:nth-child(7) { left: 65%; top: -100px; animation-delay: 3s; }
+        .data-stream:nth-child(8) { left: 75%; top: -100px; animation-delay: 3.5s; }
+        .data-stream:nth-child(9) { left: 85%; top: -100px; animation-delay: 4s; }
+        .data-stream:nth-child(10) { left: 95%; top: -100px; animation-delay: 4.5s; }
+
+        @keyframes dataStream {
+            0% { transform: translateY(0); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* Price chart pattern */
+        .price-chart-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .chart-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            animation: chartLine 8s infinite ease-in-out;
+        }
+
+        .chart-line:nth-child(1) { top: 20%; left: 0; width: 30%; animation-delay: 0s; }
+        .chart-line:nth-child(2) { top: 40%; left: 10%; width: 40%; animation-delay: 1s; }
+        .chart-line:nth-child(3) { top: 60%; left: 20%; width: 35%; animation-delay: 2s; }
+        .chart-line:nth-child(4) { top: 80%; left: 30%; width: 45%; animation-delay: 3s; }
+        .chart-line:nth-child(5) { top: 30%; left: 40%; width: 25%; animation-delay: 4s; }
+        .chart-line:nth-child(6) { top: 50%; left: 50%; width: 30%; animation-delay: 5s; }
+        .chart-line:nth-child(7) { top: 70%; left: 60%; width: 35%; animation-delay: 6s; }
+        .chart-line:nth-child(8) { top: 90%; left: 70%; width: 40%; animation-delay: 7s; }
+
+        @keyframes chartLine {
+            0% { transform: scaleX(0); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.8; }
+            100% { transform: scaleX(1); opacity: 0; }
+        }
+
+        /* Floating crypto symbols */
+        .crypto-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            opacity: 0.25;
+        }
+
+        .crypto-symbol {
+            position: absolute;
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            animation: float 15s infinite linear;
+            text-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+            font-weight: bold;
+        }
+
+        .crypto-symbol:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
+        .crypto-symbol:nth-child(2) { top: 20%; left: 80%; animation-delay: 2s; }
+        .crypto-symbol:nth-child(3) { top: 60%; left: 15%; animation-delay: 4s; }
+        .crypto-symbol:nth-child(4) { top: 40%; left: 70%; animation-delay: 6s; }
+        .crypto-symbol:nth-child(5) { top: 80%; left: 30%; animation-delay: 8s; }
+        .crypto-symbol:nth-child(6) { top: 30%; left: 50%; animation-delay: 10s; }
+        .crypto-symbol:nth-child(7) { top: 70%; left: 85%; animation-delay: 12s; }
+        .crypto-symbol:nth-child(8) { top: 15%; left: 25%; animation-delay: 14s; }
+        .crypto-symbol:nth-child(9) { top: 10%; left: 5%; animation-delay: 16s; }
+        .crypto-symbol:nth-child(10) { top: 20%; left: 80%; animation-delay: 18s; }
+        .crypto-symbol:nth-child(11) { top: 60%; left: 15%; animation-delay: 20s; }
+        .crypto-symbol:nth-child(12) { top: 40%; left: 70%; animation-delay: 22s; }
+        .crypto-symbol:nth-child(13) { top: 80%; left: 30%; animation-delay: 24s; }
+        .crypto-symbol:nth-child(14) { top: 30%; left: 50%; animation-delay: 26s; }
+        .crypto-symbol:nth-child(15) { top: 70%; left: 85%; animation-delay: 28s; }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header {
+            background: var(--background-light);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header h1 i {
+            color: var(--primary-color);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .status-indicator {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+        }
+
+        .status-running {
+            background-color: var(--success-color);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+        }
+
+        .status-stopped {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Make the trading log section wider */
+        .section:nth-child(3) {
+            grid-column: span 2;
+        }
+
+        .section {
+            background: var(--background-light);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 1.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section h2 i {
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .input-with-icon input,
+        .input-with-icon select {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .credentials-section .input-with-icon input {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: rgba(51, 65, 85, 0.8);
+            color: var(--text-secondary);
+        }
+
+        .credentials-section .input-with-icon input:focus {
+            background: rgba(15, 23, 42, 0.8);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .credentials-section .input-with-icon i {
+            color: rgba(148, 163, 184, 0.7);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .log-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            height: 400px;
+            overflow-y: auto;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1;
+            color: var(--text-secondary);
+            white-space: pre;
+            word-wrap: normal;
+            min-width: 100%;
+            width: 100%;
+        }
+
+        .log-content {
+            white-space: pre;
+            word-wrap: normal;
+            min-width: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            line-height: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Log entry styling */
+        .log-entry {
+            padding: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin: 0;
+            line-height: 1;
+            display: block;
+            min-height: 1em;
+            flex-shrink: 0;
+        }
+        
+        .log-entry:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .log-entry.error {
+            color: var(--danger-color);
+        }
+        
+        .log-entry.warning {
+            color: var(--warning-color);
+        }
+        
+        .log-entry.success {
+            color: var(--success-color);
+        }
+        
+        .log-entry.info {
+            color: var(--primary-color);
+        }
+        
+        /* Alert styling */
+        .alert {
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .alert-success {
+            background-color: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+        
+        /* Copy button */
+        .copy-log-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .copy-log-btn:hover {
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--text-primary);
+        }
+        
+        /* Log count badge */
+        .log-count {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .crypto-icons {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: hidden;
+            position: relative;
+            padding: 1.5rem 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .crypto-icons-container {
+            display: flex;
+            animation: scroll 60s linear infinite;
+            width: max-content;
+        }
+
+        .crypto-icons img {
+            width: 2.5rem;
+            height: 2.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: grayscale(40%);
+            opacity: 0.9;
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            margin: 0 1rem;
+        }
+
+        .crypto-icons img:hover {
+            transform: scale(1.1);
+            filter: grayscale(0%) brightness(1.1);
+            opacity: 1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .crypto-tooltip {
+            position: absolute;
+            background: var(--background-dark);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border-color);
+        }
+
+        .crypto-icon-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .crypto-icon-wrapper:hover .crypto-tooltip {
+            opacity: 1;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Reset the trading log section width on mobile */
+            .section:nth-child(3) {
+                grid-column: span 1;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Custom pair container styling */
+        #custom-pair-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        #custom-pair-container .form-group {
+            margin-bottom: 1rem;
+        }
+
+        #custom-pair-container input {
+            color: var(--text-primary);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            font-size: 0.875rem;
+        }
+
+        #custom-pair-container input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        #custom-pair-container input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        #custom-pair-error {
+            color: var(--danger-color);
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Blockchain pattern background -->
+    <div class="blockchain-pattern"></div>
+    
+    <!-- Crypto data stream effect -->
+    <div class="crypto-data-stream">
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+        <div class="data-stream"></div>
+    </div>
+    
+    <!-- Price chart pattern -->
+    <div class="price-chart-pattern">
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+        <div class="chart-line"></div>
+    </div>
+    
+    <!-- Floating cryptocurrency symbols in the background -->
+    <div class="crypto-background">
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+        <div class="crypto-symbol">₿</div>
+        <div class="crypto-symbol">Ξ</div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fab fa-bitcoin"></i> Crypto Trading Bot</h1>
+                <div class="status">
+                    <span
+                        class="status-indicator {% if bot_running %}status-running{% else %}status-stopped{% endif %}"></span>
+                    <span>Bot Status: {% if bot_running %}Running{% else %}Stopped{% endif %}</span>
+                </div>
+            </div>
+            <div class="crypto-icons">
+                <div class="crypto-icons-container">
+                    <!-- First set of icons -->
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/btc@2x.png" alt="Bitcoin">
+                        <div class="crypto-tooltip">Bitcoin (BTC)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/eth@2x.png" alt="Ethereum">
+                        <div class="crypto-tooltip">Ethereum (ETH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bnb@2x.png" alt="Binance Coin">
+                        <div class="crypto-tooltip">Binance Coin (BNB)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/sol@2x.png" alt="Solana">
+                        <div class="crypto-tooltip">Solana (SOL)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ada@2x.png" alt="Cardano">
+                        <div class="crypto-tooltip">Cardano (ADA)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/avax@2x.png" alt="Avalanche">
+                        <div class="crypto-tooltip">Avalanche (AVAX)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/dot@2x.png" alt="Polkadot">
+                        <div class="crypto-tooltip">Polkadot (DOT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/matic@2x.png" alt="Polygon">
+                        <div class="crypto-tooltip">Polygon (MATIC)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/link@2x.png" alt="Chainlink">
+                        <div class="crypto-tooltip">Chainlink (LINK)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/xrp@2x.png" alt="Ripple">
+                        <div class="crypto-tooltip">Ripple (XRP)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/doge@2x.png" alt="Dogecoin">
+                        <div class="crypto-tooltip">Dogecoin (DOGE)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ltc@2x.png" alt="Litecoin">
+                        <div class="crypto-tooltip">Litecoin (LTC)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bch@2x.png" alt="Bitcoin Cash">
+                        <div class="crypto-tooltip">Bitcoin Cash (BCH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/xmr@2x.png" alt="Monero">
+                        <div class="crypto-tooltip">Monero (XMR)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/dash@2x.png" alt="Dash">
+                        <div class="crypto-tooltip">Dash (DASH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/usdt@2x.png" alt="Tether">
+                        <div class="crypto-tooltip">Tether (USDT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/usd@2x.png" alt="USD">
+                        <div class="crypto-tooltip">US Dollar (USD)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/eur@2x.png" alt="EUR">
+                        <div class="crypto-tooltip">Euro (EUR)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/aave@2x.png" alt="Aave">
+                        <div class="crypto-tooltip">Aave (AAVE)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/uni@2x.png" alt="Uniswap">
+                        <div class="crypto-tooltip">Uniswap (UNI)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/1inch@2x.png" alt="1inch">
+                        <div class="crypto-tooltip">1inch (1INCH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/algo@2x.png" alt="Algorand">
+                        <div class="crypto-tooltip">Algorand (ALGO)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/atom@2x.png" alt="Cosmos">
+                        <div class="crypto-tooltip">Cosmos (ATOM)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bat@2x.png" alt="Basic Attention Token">
+                        <div class="crypto-tooltip">Basic Attention Token (BAT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/chz@2x.png" alt="Chiliz">
+                        <div class="crypto-tooltip">Chiliz (CHZ)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ant@2x.png" alt="Aragon">
+                        <div class="crypto-tooltip">Aragon (ANT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ape@2x.png" alt="ApeCoin">
+                        <div class="crypto-tooltip">ApeCoin (APE)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bal@2x.png" alt="Balancer">
+                        <div class="crypto-tooltip">Balancer (BAL)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/band@2x.png" alt="Band Protocol">
+                        <div class="crypto-tooltip">Band Protocol (BAND)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bnt@2x.png" alt="Bancor">
+                        <div class="crypto-tooltip">Bancor (BNT)</div>
+                    </div>
+                    
+                    <!-- Duplicate set for seamless looping -->
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/btc@2x.png" alt="Bitcoin">
+                        <div class="crypto-tooltip">Bitcoin (BTC)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/eth@2x.png" alt="Ethereum">
+                        <div class="crypto-tooltip">Ethereum (ETH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bnb@2x.png" alt="Binance Coin">
+                        <div class="crypto-tooltip">Binance Coin (BNB)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/sol@2x.png" alt="Solana">
+                        <div class="crypto-tooltip">Solana (SOL)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ada@2x.png" alt="Cardano">
+                        <div class="crypto-tooltip">Cardano (ADA)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/avax@2x.png" alt="Avalanche">
+                        <div class="crypto-tooltip">Avalanche (AVAX)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/dot@2x.png" alt="Polkadot">
+                        <div class="crypto-tooltip">Polkadot (DOT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/matic@2x.png" alt="Polygon">
+                        <div class="crypto-tooltip">Polygon (MATIC)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/link@2x.png" alt="Chainlink">
+                        <div class="crypto-tooltip">Chainlink (LINK)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/xrp@2x.png" alt="Ripple">
+                        <div class="crypto-tooltip">Ripple (XRP)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/doge@2x.png" alt="Dogecoin">
+                        <div class="crypto-tooltip">Dogecoin (DOGE)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ltc@2x.png" alt="Litecoin">
+                        <div class="crypto-tooltip">Litecoin (LTC)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bch@2x.png" alt="Bitcoin Cash">
+                        <div class="crypto-tooltip">Bitcoin Cash (BCH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/xmr@2x.png" alt="Monero">
+                        <div class="crypto-tooltip">Monero (XMR)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/dash@2x.png" alt="Dash">
+                        <div class="crypto-tooltip">Dash (DASH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/usdt@2x.png" alt="Tether">
+                        <div class="crypto-tooltip">Tether (USDT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/usd@2x.png" alt="USD">
+                        <div class="crypto-tooltip">US Dollar (USD)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/eur@2x.png" alt="EUR">
+                        <div class="crypto-tooltip">Euro (EUR)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/aave@2x.png" alt="Aave">
+                        <div class="crypto-tooltip">Aave (AAVE)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/uni@2x.png" alt="Uniswap">
+                        <div class="crypto-tooltip">Uniswap (UNI)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/1inch@2x.png" alt="1inch">
+                        <div class="crypto-tooltip">1inch (1INCH)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/algo@2x.png" alt="Algorand">
+                        <div class="crypto-tooltip">Algorand (ALGO)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/atom@2x.png" alt="Cosmos">
+                        <div class="crypto-tooltip">Cosmos (ATOM)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bat@2x.png" alt="Basic Attention Token">
+                        <div class="crypto-tooltip">Basic Attention Token (BAT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/chz@2x.png" alt="Chiliz">
+                        <div class="crypto-tooltip">Chiliz (CHZ)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ant@2x.png" alt="Aragon">
+                        <div class="crypto-tooltip">Aragon (ANT)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/ape@2x.png" alt="ApeCoin">
+                        <div class="crypto-tooltip">ApeCoin (APE)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bal@2x.png" alt="Balancer">
+                        <div class="crypto-tooltip">Balancer (BAL)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/band@2x.png" alt="Band Protocol">
+                        <div class="crypto-tooltip">Band Protocol (BAND)</div>
+                    </div>
+                    <div class="crypto-icon-wrapper">
+                        <img src="../static/icons/bnt@2x.png" alt="Bancor">
+                        <div class="crypto-tooltip">Bancor (BNT)</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- API Credentials Section -->
+            <div class="section credentials-section">
+                <h2><i class="fas fa-key"></i> API Credentials</h2>
+                {% if api_key %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> API keys are saved. You can update them by entering new values.
+                </div>
+                {% endif %}
+                <form method="post" class="api-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="api_key">API Key</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-key"></i>
+                            <input type="text" id="api_key" name="api_key" required
+                                placeholder="Enter your API key">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="api_secret">API Secret</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="api_secret" name="api_secret" required
+                                placeholder="Enter your API secret">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="show_secret" onclick="toggleSecret()">
+                        <label for="show_secret">Show Secret</label>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" name="action" value="save_keys" class="btn-primary">
+                            <i class="fas fa-save"></i> Save Keys
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Trading Parameters Section -->
+            <div class="section">
+                <h2><i class="fas fa-sliders-h"></i> Trading Parameters</h2>
+                    <form method="post" class="trading-form">
+                        {% csrf_token %}
+                    <div class="form-group">
+                        <label for="symbol">Trading Pair</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                            <select id="symbol" name="symbol">
+                                        <option value="BTC/USDT">BTC/USDT</option>
+                                        <option value="ETH/USDT">ETH/USDT</option>
+                                        <option value="BNB/USDT">BNB/USDT</option>
+                                        <option value="ADA/USDT">ADA/USDT</option>
+                                        <option value="SOL/USDT">SOL/USDT</option>
+                                        <option value="DOT/USDT">DOT/USDT</option>
+                                        <option value="DOGE/USDT">DOGE/USDT</option>
+                                        <option value="AVAX/USDT">AVAX/USDT</option>
+                                        <option value="MATIC/USDT">MATIC/USDT</option>
+                                        <option value="LINK/USDT">LINK/USDT</option>
+                                        <option value="custom">Custom Pair...</option>
+                                    </select>
+                        </div>
+                                </div>
+
+                    <div id="custom-pair-container" style="display: none;">
+                        <div class="form-group">
+                            <label for="custom_symbol">Enter Custom Pair</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-plus"></i>
+                                <input type="text" id="custom_symbol" placeholder="BASE/QUOTE (e.g., LINK/USDT)">
+                                    </div>
+                            <div id="custom-pair-error"></div>
+                            <button type="button" id="add-to-dropdown" class="btn-secondary" disabled>
+                                <i class="fas fa-plus"></i> Add to Dropdown
+                            </button>
+                                    </div>
+                                </div>
+
+                    <div class="form-group">
+                        <label for="timeframe">Timeframe</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-clock"></i>
+                            <select id="timeframe" name="timeframe">
+                                        <option value="1m">1 Minute</option>
+                                        <option value="5m">5 Minutes</option>
+                                        <option value="15m">15 Minutes</option>
+                                        <option value="30m">30 Minutes</option>
+                                        <option value="1h">1 Hour</option>
+                                        <option value="4h">4 Hours</option>
+                                        <option value="1d">1 Day</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                    <div class="form-group">
+                        <label for="timezone">Timezone</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-globe"></i>
+                            <select id="timezone" name="timezone">
+                                <!-- Timezones will be populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="strategy">Strategy</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-chart-line"></i>
+                            <select id="strategy" name="strategy">
+                                        <option value="rsi">RSI Strategy</option>
+                                        <option value="macd">MACD Strategy</option>
+                                        <option value="bollinger">Bollinger Bands</option>
+                                        <option value="custom">Custom Strategy</option>
+                                    </select>
+                                </div>
+                                </div>
+
+                    <div class="form-group">
+                        <label for="amount">Trade Amount (USDT)</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="number" id="amount" name="amount" value="10" min="1" step="1">
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" name="action" value="start" class="btn-primary">
+                            <i class="fas fa-play"></i> Start Trading
+                        </button>
+                        </div>
+                    </form>
+            </div>
+
+            <!-- Trading Log Section -->
+            <div class="section">
+                <h2><i class="fas fa-terminal"></i> Trading Log</h2>
+                <div class="log-controls">
+                    <button class="btn-secondary" onclick="clearLog()">
+                        <i class="fas fa-trash"></i> Clear Log
+                    </button>
+                    <button class="btn-secondary" onclick="toggleAutoScroll()">
+                        <i class="fas fa-scroll"></i> Toggle Auto-scroll
+                    </button>
+                </div>
+                <div class="log-container">
+                    <div id="log" class="log-content">
+                        {% for log in logs %}
+                            <div class="log-entry">{{ log|safe }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing...</div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        function toggleSecret() {
+            const secretInput = document.getElementById("api_secret");
+            secretInput.type = secretInput.type === "password" ? "text" : "password";
+        }
+
+        // Real-time log system using WebSockets
+        let socket = null;
+        let autoScroll = true;
+        let logElement = document.getElementById("log");
+        let lastClearTime = null;
+        
+        function initializeWebSocket() {
+            // Create WebSocket connection
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/logs/`;
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(e) {
+                console.log("WebSocket connection established");
+                // Request initial logs
+                socket.send(JSON.stringify({type: 'get_logs'}));
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'log_update') {
+                    // Get selected timezone
+                    const selectedTimezone = document.getElementById('timezone').value;
+                    
+                    // Clear existing logs
+                    logElement.innerHTML = '';
+                    
+                    // Add each log entry with proper formatting
+                    data.logs.forEach(log => {
+                        const logEntry = document.createElement('div');
+                        logEntry.className = `log-entry ${log.class}`;
+                        // Remove any newlines and extra spaces
+                        logEntry.textContent = log.text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                        logElement.appendChild(logEntry);
+                    });
+                    
+                    // Auto-scroll if enabled
+                    if (autoScroll) {
+                        logElement.scrollTop = logElement.scrollHeight;
+                    }
+                }
+            };
+            
+            socket.onclose = function(event) {
+                console.log("WebSocket connection closed, attempting to reconnect...");
+                // Attempt to reconnect after 3 seconds
+                setTimeout(initializeWebSocket, 3000);
+            };
+            
+            socket.onerror = function(error) {
+                console.error("WebSocket error:", error);
+            };
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Populate timezone dropdown
+            const timezoneSelect = document.getElementById('timezone');
+            const timezones = Intl.supportedValuesOf('timeZone');
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            
+            // Sort timezones alphabetically
+            timezones.sort();
+            
+            // Add timezones to dropdown
+            timezones.forEach(timezone => {
+                const option = document.createElement('option');
+                option.value = timezone;
+                
+                // Get timezone offset
+                const date = new Date();
+                const offset = date.toLocaleString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' }).split(' ').pop();
+                
+                // Format display text
+                option.textContent = `${timezone} (${offset})`;
+                
+                // Select user's timezone if it matches
+                if (timezone === userTimezone) {
+                    option.selected = true;
+                }
+                
+                timezoneSelect.appendChild(option);
+            });
+            
+            // Add event listener for timezone changes
+            timezoneSelect.addEventListener('change', function() {
+                // Request logs again to update with new timezone
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({type: 'get_logs'}));
+                }
+            });
+            
+            // Handle API credentials form submission
+            const apiForm = document.querySelector('.api-form');
+            apiForm.addEventListener('submit', function(e) {
+                // Don't prevent default form submission
+                // Instead, add a hidden input to indicate this is an AJAX request
+                
+                // Create a hidden input for AJAX flag
+                const ajaxInput = document.createElement('input');
+                ajaxInput.type = 'hidden';
+                ajaxInput.name = 'ajax';
+                ajaxInput.value = 'true';
+                this.appendChild(ajaxInput);
+                
+                // Show loading overlay
+                showLoading();
+                
+                // Request updated logs after form submission
+                setTimeout(() => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({type: 'get_logs'}));
+                    }
+                }, 1000);
+                
+                // Submit the form normally
+                // The server will handle the response
+            });
+            
+            // Initialize WebSocket
+            initializeWebSocket();
+            
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Clear log
+        function clearLog() {
+            // Delete the log content
+            logElement.innerText = '';
+            lastClearTime = new Date();
+            
+            // Send clear command to server
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'clear_logs',
+                    timestamp: lastClearTime.toISOString()
+                }));
+            }
+        }
+
+        // Toggle auto-scroll
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            const button = document.querySelector('.btn-secondary:nth-child(2)');
+            button.innerHTML = autoScroll ?
+                '<i class="fas fa-scroll"></i> Disable Auto-scroll' :
+                '<i class="fas fa-scroll"></i> Enable Auto-scroll';
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        // Handle trading form submission
+        const tradingForm = document.querySelector('.trading-form');
+        tradingForm.addEventListener('submit', function (e) {
+            // Don't prevent default form submission
+            
+            if (symbolSelect.value === 'custom') {
+                const customSymbol = customSymbolInput.value.trim();
+
+                if (!customSymbol) {
+                    e.preventDefault();
+                    alert('Please enter a custom trading pair');
+                    return false;
+                }
+
+                // Validate format
+                const pattern = /^[A-Z]+\/[A-Z]+$/;
+                if (!pattern.test(customSymbol)) {
+                    e.preventDefault();
+                    alert('Invalid trading pair format. Please use BASE/QUOTE (e.g., LINK/USDT)');
+                    return false;
+                }
+                
+                // Create hidden input with custom symbol
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'symbol';
+                hiddenInput.value = customSymbol;
+                this.appendChild(hiddenInput);
+            }
+            
+            // Create a hidden input for AJAX flag
+            const ajaxInput = document.createElement('input');
+            ajaxInput.type = 'hidden';
+            ajaxInput.name = 'ajax';
+            ajaxInput.value = 'true';
+            this.appendChild(ajaxInput);
+            
+            // Show loading overlay
+            showLoading();
+            
+            // Submit the form normally
+            // The server will handle the response
+        });
+
+        // Custom pair handling
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get elements
+            const symbolSelect = document.getElementById('symbol');
+            const customPairContainer = document.getElementById('custom-pair-container');
+            const customSymbolInput = document.getElementById('custom_symbol');
+            const addToDropdownBtn = document.getElementById('add-to-dropdown');
+            const customPairError = document.getElementById('custom-pair-error');
+
+            // Show/hide custom pair input based on dropdown selection
+            symbolSelect.addEventListener('change', function () {
+                if (this.value === 'custom') {
+                    customPairContainer.style.display = 'block';
+                    customSymbolInput.focus();
+                } else {
+                    customPairContainer.style.display = 'none';
+                }
+            });
+
+            // Validate custom pair format
+            customSymbolInput.addEventListener('input', function () {
+                const customSymbol = this.value.trim();
+                
+                // Check if the input matches the format BASE/QUOTE (e.g., LINK/USDT)
+                const pattern = /^[A-Z]+\/[A-Z]+$/;
+                
+                if (pattern.test(customSymbol)) {
+                    // Enable the button if the format is correct
+                    addToDropdownBtn.disabled = false;
+                    customPairError.textContent = '';
+                    customPairError.style.color = 'var(--success-color)';
+                    customPairError.textContent = 'Valid format';
+                } else {
+                    // Disable the button if the format is incorrect
+                    addToDropdownBtn.disabled = true;
+                    customPairError.style.color = 'var(--danger-color)';
+                    
+                    if (customSymbol === '') {
+                        customPairError.textContent = 'Please enter a trading pair';
+                    } else if (!customSymbol.includes('/')) {
+                        customPairError.textContent = 'Missing separator. Use format: BASE/QUOTE';
+                    } else if (customSymbol.split('/').length !== 2) {
+                        customPairError.textContent = 'Invalid format. Use only one separator';
+                    } else {
+                        customPairError.textContent = 'Invalid format. Use uppercase letters only (e.g., LINK/USDT)';
+                    }
+                }
+            });
+
+            // Add custom pair to dropdown
+            addToDropdownBtn.addEventListener('click', function () {
+                const customSymbol = customSymbolInput.value.trim();
+
+                // Check if the pair already exists
+                let exists = false;
+                for (let i = 0; i < symbolSelect.options.length; i++) {
+                    if (symbolSelect.options[i].value === customSymbol) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists) {
+                    // Create new option
+                    const newOption = document.createElement('option');
+                    newOption.value = customSymbol;
+                    newOption.textContent = customSymbol;
+
+                    // Insert before the "Custom Pair..." option
+                    const customOption = symbolSelect.querySelector('option[value="custom"]');
+                    symbolSelect.insertBefore(newOption, customOption);
+
+                    // Show success message
+                    customPairError.style.color = 'var(--success-color)';
+                    customPairError.textContent = `Added ${customSymbol} to dropdown`;
+
+                    // Select the new option
+                    symbolSelect.value = customSymbol;
+                    customPairContainer.style.display = 'none';
+
+                    // Reset after 3 seconds
+                    setTimeout(() => {
+                        customPairError.textContent = '';
+                    }, 3000);
+                } else {
+                    // Show warning message
+                    customPairError.style.color = 'var(--warning-color)';
+                    customPairError.textContent = `${customSymbol} already exists in dropdown`;
+
+                    // Reset after 3 seconds
+                    setTimeout(() => {
+                        customPairError.textContent = '';
+                    }, 3000);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
