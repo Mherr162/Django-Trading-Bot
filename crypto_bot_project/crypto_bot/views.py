@@ -84,13 +84,43 @@ def bot_control(request):
                 bot = None
                 bot_thread = None
         elif action == "save_keys":
-            api_key = request.POST.get("api_key")
-            api_secret = request.POST.get("api_secret")
-            if api_key and api_secret:
+            api_key = request.POST.get("api_key", "").strip()
+            api_secret = request.POST.get("api_secret", "").strip()
+            print(f"Save keys action triggered. API key present: {bool(api_key)}, API secret present: {bool(api_secret)}")
+            
+            if not api_key or not api_secret:
+                print("Missing API key or secret")
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        "status": "error",
+                        "message": "Both API Key and Secret are required"
+                    }, status=400)
+                else:
+                    log_callback("Error: Both API Key and Secret are required", "ERROR", default_timezone)
+                    return render(request, "bot_control.html", {"logs": logs, "bot_running": bot is not None and bot_thread is not None and bot_thread.is_alive()})
+            
+            try:
                 save_api_keys(api_key, api_secret)
-                log_callback("API keys saved successfully", "SUCCESS", default_timezone)
-            else:
-                log_callback("Error: Both API Key and Secret are required to save", "ERROR", default_timezone)
+                print("API keys saved successfully")
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        "status": "success",
+                        "message": "API keys saved successfully"
+                    })
+                else:
+                    log_callback("API keys saved successfully", "SUCCESS", default_timezone)
+                    return render(request, "bot_control.html", {"logs": logs, "bot_running": bot is not None and bot_thread is not None and bot_thread.is_alive()})
+            except Exception as e:
+                error_msg = f"Error saving API keys: {str(e)}"
+                print(error_msg)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        "status": "error",
+                        "message": error_msg
+                    }, status=500)
+                else:
+                    log_callback(error_msg, "ERROR", default_timezone)
+                    return render(request, "bot_control.html", {"logs": logs, "bot_running": bot is not None and bot_thread is not None and bot_thread.is_alive()})
         elif action == "clear_keys":
             try:
                 save_api_keys("", "")  # Save empty strings to clear the keys

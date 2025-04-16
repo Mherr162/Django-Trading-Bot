@@ -1325,12 +1325,36 @@
                 // Get the clicked button's action value
                 const clickedButton = document.activeElement;
                 const action = clickedButton.value;
+                console.log('Form submitted with action:', action);
+                
+                // Get form data
+                const apiKey = document.getElementById('api_key').value;
+                const apiSecret = document.getElementById('api_secret').value;
+                
+                if (!apiKey || !apiSecret) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger';
+                    alertDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Both API Key and Secret are required';
+                    apiForm.parentNode.insertBefore(alertDiv, apiForm);
+                    setTimeout(() => alertDiv.remove(), 5000);
+                    return;
+                }
                 
                 // Show loading overlay
                 showLoading();
                 
                 // Create FormData object
-                const formData = new FormData(this);
+                const formData = new FormData();
+                formData.append('api_key', apiKey);
+                formData.append('api_secret', apiSecret);
+                formData.append('action', action);
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                
+                console.log('Form data:', {
+                    api_key: apiKey ? 'present' : 'missing',
+                    api_secret: apiSecret ? 'present' : 'missing',
+                    action: action
+                });
                 
                 // Send POST request
                 fetch(window.location.href, {
@@ -1340,9 +1364,15 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 })
-                .then(response => response.text())
-                .then(html => {
-                    // Hide loading overlay
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response received:', data);
                     hideLoading();
                     
                     // If clearing keys, clear the input fields
@@ -1351,10 +1381,16 @@
                         document.getElementById('api_secret').value = '';
                     }
                     
-                    // Request updated logs
-                    if (socket && socket.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify({type: 'get_logs'}));
-                    }
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message}`;
+                    apiForm.parentNode.insertBefore(alertDiv, apiForm);
+                    
+                    // Remove alert after 5 seconds
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 5000);
                     
                     // Reload the page to update the status
                     window.location.reload();
@@ -1362,7 +1398,17 @@
                 .catch(error => {
                     console.error('Error:', error);
                     hideLoading();
-                    alert('An error occurred while processing your request.');
+                    
+                    // Show error message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger';
+                    alertDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> An error occurred while saving the keys. Please try again.';
+                    apiForm.parentNode.insertBefore(alertDiv, apiForm);
+                    
+                    // Remove alert after 5 seconds
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 5000);
                 });
             });
             
