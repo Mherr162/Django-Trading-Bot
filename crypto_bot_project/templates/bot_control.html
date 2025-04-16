@@ -1017,6 +1017,14 @@
             <!-- API Credentials Section -->
             <div class="section credentials-section">
                 <h2><i class="fas fa-key"></i> API Credentials</h2>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> This bot uses Binance.US. Please make sure to:
+                    <ul>
+                        <li>Create an account on <a href="https://www.binance.us" target="_blank">Binance.US</a></li>
+                        <li>Enable 2FA for your account</li>
+                        <li>Create API keys with appropriate permissions</li>
+                    </ul>
+                </div>
                 {% if api_key %}
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i> API keys are saved. You can update them by entering new values.
@@ -1047,6 +1055,9 @@
                     <div class="button-group">
                         <button type="submit" name="action" value="save_keys" class="btn-primary">
                             <i class="fas fa-save"></i> Save Keys
+                        </button>
+                        <button type="submit" name="action" value="clear_keys" class="btn-secondary">
+                            <i class="fas fa-trash"></i> Clear Keys
                         </button>
                     </div>
                 </form>
@@ -1125,16 +1136,38 @@
                                         <option value="rsi">RSI Strategy</option>
                                         <option value="macd">MACD Strategy</option>
                                         <option value="bollinger">Bollinger Bands</option>
+                                        <option value="price_targets">Price Targets</option>
                                         <option value="custom">Custom Strategy</option>
                                     </select>
+                        </div>
                                 </div>
-                                </div>
+
+                    <!-- Price Targets Section -->
+                    <div id="price-targets-container">
+                        <div class="form-group">
+                            <label for="buy_price">Buy Price Target (USDT)</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-arrow-down"></i>
+                                <input type="number" id="buy_price" name="buy_price" step="0.00000001" min="0" placeholder="Enter buy price target" style="color: var(--text-primary); background-color: rgba(0, 0, 0, 0.3);">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="sell_price">Sell Price Target (USDT)</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-arrow-up"></i>
+                                <input type="number" id="sell_price" name="sell_price" step="0.00000001" min="0" placeholder="Enter sell price target" style="color: var(--text-primary); background-color: rgba(0, 0, 0, 0.3);">
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> The bot will buy when the price drops to or below the buy price, and sell when the price rises to or above the sell price.
+                        </div>
+                    </div>
 
                     <div class="form-group">
                         <label for="amount">Trade Amount (USDT)</label>
                         <div class="input-with-icon">
                             <i class="fas fa-dollar-sign"></i>
-                            <input type="number" id="amount" name="amount" value="10" min="1" step="1">
+                            <input type="number" id="amount" name="amount" value="10" min="1" step="1" style="color: var(--text-primary); background-color: rgba(0, 0, 0, 0.3);">
                         </div>
                     </div>
 
@@ -1142,7 +1175,16 @@
                         <button type="submit" name="action" value="start" class="btn-primary">
                             <i class="fas fa-play"></i> Start Trading
                         </button>
-                        </div>
+                    </div>
+                    </form>
+                    
+                    <!-- Separate stop form to avoid loading overlay issues -->
+                    <form method="post" class="stop-form" style="margin-top: 1rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="stop">
+                        <button type="submit" class="btn-danger">
+                            <i class="fas fa-stop"></i> Stop Bot
+                        </button>
                     </form>
             </div>
 
@@ -1278,28 +1320,50 @@
             // Handle API credentials form submission
             const apiForm = document.querySelector('.api-form');
             apiForm.addEventListener('submit', function(e) {
-                // Don't prevent default form submission
-                // Instead, add a hidden input to indicate this is an AJAX request
+                e.preventDefault(); // Prevent default form submission
                 
-                // Create a hidden input for AJAX flag
-                const ajaxInput = document.createElement('input');
-                ajaxInput.type = 'hidden';
-                ajaxInput.name = 'ajax';
-                ajaxInput.value = 'true';
-                this.appendChild(ajaxInput);
+                // Get the clicked button's action value
+                const clickedButton = document.activeElement;
+                const action = clickedButton.value;
                 
                 // Show loading overlay
                 showLoading();
                 
-                // Request updated logs after form submission
-                setTimeout(() => {
+                // Create FormData object
+                const formData = new FormData(this);
+                
+                // Send POST request
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Hide loading overlay
+                    hideLoading();
+                    
+                    // If clearing keys, clear the input fields
+                    if (action === 'clear_keys') {
+                        document.getElementById('api_key').value = '';
+                        document.getElementById('api_secret').value = '';
+                    }
+                    
+                    // Request updated logs
                     if (socket && socket.readyState === WebSocket.OPEN) {
                         socket.send(JSON.stringify({type: 'get_logs'}));
                     }
-                }, 1000);
-                
-                // Submit the form normally
-                // The server will handle the response
+                    
+                    // Reload the page to update the status
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    hideLoading();
+                    alert('An error occurred while processing your request.');
+                });
             });
             
             // Initialize WebSocket
@@ -1349,13 +1413,20 @@
         // Handle trading form submission
         const tradingForm = document.querySelector('.trading-form');
         tradingForm.addEventListener('submit', function (e) {
-            // Don't prevent default form submission
+            // Get form elements
+            const symbolSelect = document.getElementById('symbol');
+            const customSymbolInput = document.getElementById('custom_symbol');
             
-            if (symbolSelect.value === 'custom') {
+            // Show loading overlay
+            showLoading();
+            
+            // Handle custom trading pair
+            if (symbolSelect && symbolSelect.value === 'custom' && customSymbolInput) {
                 const customSymbol = customSymbolInput.value.trim();
 
                 if (!customSymbol) {
                     e.preventDefault();
+                    hideLoading();
                     alert('Please enter a custom trading pair');
                     return false;
                 }
@@ -1364,6 +1435,7 @@
                 const pattern = /^[A-Z]+\/[A-Z]+$/;
                 if (!pattern.test(customSymbol)) {
                     e.preventDefault();
+                    hideLoading();
                     alert('Invalid trading pair format. Please use BASE/QUOTE (e.g., LINK/USDT)');
                     return false;
                 }
@@ -1383,11 +1455,21 @@
             ajaxInput.value = 'true';
             this.appendChild(ajaxInput);
             
-            // Show loading overlay
-            showLoading();
-            
             // Submit the form normally
             // The server will handle the response
+        });
+        
+        // Handle stop form submission separately
+        const stopForm = document.querySelector('.stop-form');
+        stopForm.addEventListener('submit', function(e) {
+            if (!confirm('Are you sure you want to stop the trading bot? This will close all open positions.')) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Don't show loading overlay for stop action
+            // Just submit the form directly
+            return true;
         });
 
         // Custom pair handling
@@ -1398,6 +1480,10 @@
             const customSymbolInput = document.getElementById('custom_symbol');
             const addToDropdownBtn = document.getElementById('add-to-dropdown');
             const customPairError = document.getElementById('custom-pair-error');
+            
+            // Price targets elements
+            const strategySelect = document.getElementById('strategy');
+            const priceTargetsContainer = document.getElementById('price-targets-container');
 
             // Show/hide custom pair input based on dropdown selection
             symbolSelect.addEventListener('change', function () {
@@ -1406,6 +1492,23 @@
                     customSymbolInput.focus();
                 } else {
                     customPairContainer.style.display = 'none';
+                }
+            });
+            
+            // Show/hide price targets based on strategy selection
+            strategySelect.addEventListener('change', function() {
+                const priceTargetsContainer = document.getElementById('price-targets-container');
+                const buyPriceInput = document.getElementById('buy_price');
+                const sellPriceInput = document.getElementById('sell_price');
+                
+                if (this.value === 'price_targets') {
+                    priceTargetsContainer.style.display = 'block';
+                    buyPriceInput.required = true;
+                    sellPriceInput.required = true;
+                } else {
+                    priceTargetsContainer.style.display = 'none';
+                    buyPriceInput.required = false;
+                    sellPriceInput.required = false;
                 }
             });
 

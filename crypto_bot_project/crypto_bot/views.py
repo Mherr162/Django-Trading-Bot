@@ -44,16 +44,36 @@ def bot_control(request):
         action = request.POST.get("action")
         if action == "start":
             if bot is None or bot_thread is None or not bot_thread.is_alive():
+                # First try to get credentials from form
                 api_key = request.POST.get("api_key")
                 api_secret = request.POST.get("api_secret")
-                symbol = request.POST.get("symbol", "BTC/USDT")
-                timeframe = request.POST.get("timeframe", "1h")
-                short_window = int(request.POST.get("short_window", 10))
-                long_window = int(request.POST.get("long_window", 50))
-                amount = float(request.POST.get("amount", 0.001))
+                
+                # If not in form, try to load saved credentials
+                if not api_key or not api_secret:
+                    api_key, api_secret = load_api_keys()
+                
                 if not api_key or not api_secret:
                     log_callback("Error: API Key and Secret are required", "ERROR", default_timezone)
                 else:
+                    symbol = request.POST.get("symbol", "BTC/USDT")
+                    timeframe = request.POST.get("timeframe", "1h")
+                    strategy = request.POST.get("strategy", "rsi")
+                    amount = float(request.POST.get("amount", 10))
+                    
+                    # Set default windows based on strategy
+                    if strategy == "rsi":
+                        short_window = 14
+                        long_window = 14
+                    elif strategy == "macd":
+                        short_window = 12
+                        long_window = 26
+                    elif strategy == "bollinger":
+                        short_window = 20
+                        long_window = 20
+                    else:
+                        short_window = 10
+                        long_window = 50
+                    
                     bot = TradingBot(lambda msg, level="INFO": log_callback(msg, level, default_timezone), api_key, api_secret)
                     bot_thread = Thread(target=bot.run, args=(symbol, timeframe, short_window, long_window, amount))
                     bot_thread.start()
@@ -71,6 +91,22 @@ def bot_control(request):
                 log_callback("API keys saved successfully", "SUCCESS", default_timezone)
             else:
                 log_callback("Error: Both API Key and Secret are required to save", "ERROR", default_timezone)
+        elif action == "clear_keys":
+            try:
+                save_api_keys("", "")  # Save empty strings to clear the keys
+                log_callback("API keys cleared successfully", "SUCCESS", default_timezone)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        "status": "success",
+                        "message": "API keys cleared successfully"
+                    })
+            except Exception as e:
+                log_callback(f"Error clearing API keys: {str(e)}", "ERROR", default_timezone)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        "status": "error",
+                        "message": f"Error clearing API keys: {str(e)}"
+                    })
     
     api_key, api_secret = load_api_keys()
     
