@@ -7,7 +7,7 @@ A powerful cryptocurrency trading bot built with Django, featuring real-time tra
 ## Features
 
 - **Real-time Trading**: Execute trades automatically based on customizable strategies
-- **Multiple Trading Strategies**: Choose from RSI, MACD, Bollinger Bands, or create your own
+- **Multiple Trading Strategies**: Choose from RSI, MACD, Bollinger Bands, Price Targets, or create your own
 - **Custom Trading Pairs**: Add any cryptocurrency pair to the trading list
 - **Secure API Key Management**: Encrypted storage of exchange API credentials
 - **Real-time Logging**: Monitor trading activity with auto-scrolling logs
@@ -85,6 +85,13 @@ A powerful cryptocurrency trading bot built with Django, featuring real-time tra
 - Price volatility based trading
 - Buy when price touches lower band
 - Sell when price touches upper band
+
+### Price Targets Strategy
+- Set specific price levels for buying and selling
+- Buy when price drops to or below your buy target
+- Sell when price rises to or above your sell target
+- Perfect for range-bound markets or specific entry/exit points
+- Automatically tracks your position size for accurate selling
 
 ## Log Management
 
